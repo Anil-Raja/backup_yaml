@@ -1,0 +1,57 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-fix-sc
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-fix-pv
+spec:
+  capacity:
+    storage: 200Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-fix-sc
+  hostPath:
+    path: /TanzuNFS
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-fix-pvc
+spec:
+  volumeName: nfs-fix-pv
+  resources:
+    requests:
+      storage: 200Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-fix-sc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-nfs-fix
+spec:
+  selector:
+    matchLabels:
+      app: nfs
+  template:
+    metadata:
+      labels:
+        app: nfs
+    spec:
+      containers:
+        - name: busybox-nfs-fix
+          image: busybox
+      volumes:
+        - name: nfs-fix-vol
+          hostPath:
+            path: /TanzuNFS
+            type: DirectoryOrCreate
